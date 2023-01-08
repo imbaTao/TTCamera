@@ -1,0 +1,25 @@
+PODS:
+  - SnapKit (5.6.0)
+  - TTCamera (0.1.0):
+    - TTCamera/TTNativeCamera (= 0.1.0)
+  - TTCamera/TTNativeCamera (0.1.0)
+
+DEPENDENCIES:
+  - SnapKit
+  - TTCamera (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - SnapKit
+
+EXTERNAL SOURCES:
+  TTCamera:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
+  TTCamera: 9253ec79bf61ad6389d4ecfcafb94a47ecb0d34e
+
+PODFILE CHECKSUM: 47d2863514c6a5b41131e013e7b05bac77f48979
+
+COCOAPODS: 1.11.3
