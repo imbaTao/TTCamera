@@ -13,6 +13,7 @@ open class TTNativeCameraPreiew: UIView {
     
     func bindSession(_ session: AVCaptureSession) {
         previewLayer = .init(session: session)
+        previewLayer.videoGravity = .resizeAspectFill
         layer.insertSublayer(previewLayer, at: 0)
     }
     

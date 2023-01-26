@@ -28,11 +28,9 @@ open class TTNativeCamera: NSObject {
         }
     }
     
-    
-    
     private let captureSession = AVCaptureSession()
-    private var currentPositon: AVCaptureDevice.Position = .front
-    private let captureQueue: DispatchQueue = DispatchQueue(label: "TTNativeCameraQueue")
+    private var currentPositon: AVCaptureDevice.Position = .back
+    private let captureQueue = DispatchQueue(label: "TTNativeCameraQueue")
     private var currentOutput: AVCaptureVideoDataOutput? {
         if let outputs = self.captureSession.outputs as? [AVCaptureVideoDataOutput] {
             return outputs.first
@@ -42,11 +40,10 @@ open class TTNativeCamera: NSObject {
     }
     
     public let localPreview =  TTNativeCameraPreiew()
-    
-    
+
     public init(_ configuation: ((TTNativeCamera.Config) -> ())) {
         super.init()
-        configuation(self.config)
+        configuation(config)
         setupDefaultConfig()
         setupSession()
     }
@@ -57,6 +54,7 @@ open class TTNativeCamera: NSObject {
     
     private func setupSession() {
         captureSession.usesApplicationAudioSession = false
+        
         let captureOutput = AVCaptureVideoDataOutput()
         captureOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange]
         if captureSession.canAddOutput(captureOutput) {
@@ -68,8 +66,8 @@ open class TTNativeCamera: NSObject {
     }
     
     // 切换设备
-    private func changeCaptureDevice(toIndex index: Int, ofSession captureSession: AVCaptureSession) {
-        guard let captureDevice = fetchCaptureDevice(atIndex: index) else {
+    private func changeCaptureDevice(ofSession captureSession: AVCaptureSession) {
+        guard let captureDevice = fetchCaptureDevice() else {
             return
         }
         
@@ -99,11 +97,21 @@ open class TTNativeCamera: NSObject {
     }
     
     
-    func fetchCaptureDevice(atIndex index: Int) -> AVCaptureDevice? {
+    func fetchCaptureDevice() -> AVCaptureDevice? {
         let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: AVMediaType.video, position: currentPositon)
         
         // 可用的设备
         let devices = deviceDiscoverySession.devices
+        
+        var index = 0
+        switch currentPositon {
+        case .back:
+            index = 1
+        case .front:
+            index = 0
+        default:
+            index = 0
+        }
         
         let count = devices.count
         guard count > 0, index >= 0 else {
@@ -135,13 +143,11 @@ public extension TTNativeCamera {
         
         // 选择设备
         captureQueue.async { [weak self]  in guard let self = self else { return }
-            self.changeCaptureDevice(toIndex: 0, ofSession: self.captureSession)
+            self.changeCaptureDevice(ofSession: self.captureSession)
             self.captureSession.beginConfiguration()
             
-            let preset = AVCaptureSession.Preset.vga640x480
-            
-            if self.captureSession.canSetSessionPreset(preset) {
-                self.captureSession.sessionPreset = preset
+            if self.captureSession.canSetSessionPreset(self.config.preset) {
+                self.captureSession.sessionPreset = self.config.preset
             }
             self.captureSession.commitConfiguration()
             self.captureSession.startRunning()
@@ -159,17 +165,19 @@ public extension TTNativeCamera {
     // 切换摄像头方向
     func switchPosition(_ position: AVCaptureDevice.Position) {
         currentPositon = position
-        changeCaptureDevice(toIndex: 0, ofSession: captureSession)
+        changeCaptureDevice(ofSession: captureSession)
     }
 }
 
 
 // MARK: - 原生画面输出
 extension TTNativeCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
-    public func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
         }
+        
+//        print("采集中")
         
         let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         DispatchQueue.main.async {[weak self]  in guard let self = self else { return }
