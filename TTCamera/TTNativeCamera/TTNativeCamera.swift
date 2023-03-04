@@ -29,7 +29,7 @@ open class TTNativeCamera: NSObject {
     }
     
     private let captureSession = AVCaptureSession()
-    private var currentPositon: AVCaptureDevice.Position = .back
+    public private(set) var currentPositon: AVCaptureDevice.Position = .back
     private let captureQueue = DispatchQueue(label: "TTNativeCameraQueue")
     private var currentOutput: AVCaptureVideoDataOutput? {
         if let outputs = self.captureSession.outputs as? [AVCaptureVideoDataOutput] {
@@ -40,7 +40,7 @@ open class TTNativeCamera: NSObject {
     }
     
     public let localPreview =  TTNativeCameraPreiew()
-
+    
     public init(_ configuation: ((TTNativeCamera.Config) -> ())) {
         super.init()
         configuation(config)
@@ -167,6 +167,7 @@ public extension TTNativeCamera {
         currentPositon = position
         changeCaptureDevice(ofSession: captureSession)
     }
+    
 }
 
 
